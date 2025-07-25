@@ -59,7 +59,7 @@ dev = [
 ]
 
 [project.scripts]
-contact-pipeline = "enhanced_pipeline_main:main"
+contact-pipeline = "run_pipeline:main"
 
 [build-system]
 requires = ["hatchling"]

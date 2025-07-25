@@ -18,7 +18,7 @@ import pandas as pd
 import numpy as np
 
 from .base_task import PipelineContext, SyncTask, TaskResult, TaskStatus
-from utils.advanced_optimizations_2025 import (
+from utils.performance_monitor import (
     PerformanceMonitor, 
     ResilientOperationContext
 )
@@ -60,23 +60,11 @@ class IntelligentContactMerger(SyncTask):
         self.name = "smart_deduplicator_agent"  # Keep same name for compatibility
         self.logger = logging.getLogger(f"task.{self.name}")
         
-        # Initialize ML components
-        # self.tfidf_vectorizer = TfidfVectorizer(
-        #     max_features=500,
-        #     min_df=2,
-        #     max_df=0.8,
-        #     stop_words='english',
-        #     ngram_range=(1, 2)
-        # )
-        
         # Performance monitoring
         self.performance_monitor = PerformanceMonitor()
         
-        # Simple matching configuration (no ML thresholds needed)
+        # Simple exact matching configuration
         self.EXACT_MATCH_THRESHOLD = 1.0
-        # self.FUZZY_MATCH_THRESHOLD = 85  # Not needed for simple exact matching
-        # self.SEMANTIC_SIMILARITY_THRESHOLD = 0.75  # Not needed
-        # self.LLM_CONFIDENCE_THRESHOLD = 0.8  # Not needed for exact matches
 
     def execute_sync(self, context: PipelineContext) -> TaskResult:
         """Execute intelligent contact merging"""
@@ -111,8 +99,8 @@ class IntelligentContactMerger(SyncTask):
             exact_removed = initial_count - len(df_no_exact)
             self.logger.info(f"   ⚡ Removed {exact_removed} exact duplicates")
             
-            # Step 2: ML-based similarity detection
-            self.logger.info("🧠 Step 2: ML-based similarity detection...")
+            # Step 2: Rule-based similarity detection
+            self.logger.info("🧠 Step 2: Rule-based similarity detection...")
             potential_matches = self._find_potential_matches(df_no_exact)
             self.logger.info(f"   🧠 Found {len(potential_matches)} potential matches")
             

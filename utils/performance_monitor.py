@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """
-Advanced 2025 Optimization Framework
-Cutting-edge performance, memory management, error handling, and monitoring
+Performance Monitor & Optimization Framework
 
-FEATURES:
-- Advanced async/await patterns with RapidFuzz
+This module provides performance monitoring, memory management, and optimization
+utilities for the contact consolidation pipeline. It includes real-time monitoring,
+circuit breaker patterns, and adaptive optimization features.
+
+Used by:
+- Smart Deduplicator Agent (Agent 4) for memory-efficient duplicate detection
+- Other agents requiring performance monitoring and resilient operation patterns
+
+Key Features:
+- Real-time CPU and memory monitoring
+- Circuit breaker pattern for external service resilience
 - Memory-optimized data structures with __slots__
-- Intelligent error handling with contextual recovery
-- Real-time performance monitoring and adaptive optimization
-- Resource pooling and connection management
 - Exponential backoff retry strategies
-- Circuit breaker pattern for external services
+- Contextual error recovery mechanisms
 """
 
 import asyncio

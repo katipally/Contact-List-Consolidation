@@ -1,7 +1,24 @@
 #!/usr/bin/env python3
 """
-Base Task Interface - React-style Component Pattern
-Provides the foundation for all pipeline tasks with standardized interfaces
+Base Task Interface - Agent Foundation Framework
+
+Provides the standardized foundation interface that all 5 agents inherit from.
+Defines common patterns for task execution, error handling, logging, and result
+management across the entire pipeline.
+
+Used by:
+- Agent 1 (File Converter Task)
+- Agent 2 (Column Mapper Agent Task) 
+- Agent 3 (Data Consolidator Agent Task)
+- Agent 4 (Smart Deduplicator Agent Task)
+- Agent 5 (Web Scraper Agent Task)
+
+Core Abstractions:
+- TaskStatus enumeration for execution state tracking
+- TaskResult dataclass for standardized result reporting
+- TaskConfig dataclass for agent configuration
+- PipelineContext for inter-agent data sharing
+- BaseTask abstract class with common execution patterns
 """
 
 import asyncio

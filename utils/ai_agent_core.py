@@ -1,13 +1,24 @@
 #!/usr/bin/env python3
 """
-AI Agent Core - DeepSeek-r1:8b Integration via Ollama
-Provides intelligent decision making capabilities throughout the pipeline
+AI Agent Core - LLM Integration Hub
 
-Features:
+Central hub for all AI/LLM operations in the contact consolidation pipeline.
+Provides a unified interface to Ollama-hosted Gemma3:4b model for intelligent
+decision making across all agents.
+
+Used by:
+- Column Mapper Agent (Agent 2) for intelligent column name mapping
+- Smart Deduplicator Agent (Agent 4) for duplicate detection reasoning
+- Web Scraper Agent (Agent 5) for email extraction from web content
+- Any agent requiring LLM-powered decision making
+
+Core Capabilities:
+- Async LLM communication with Ollama
+- Structured decision making with confidence scoring
 - Contact duplicate detection using AI reasoning
-- Data verification and confidence scoring
-- Intelligent data enrichment decisions
-- Progress estimation and reporting
+- Data verification and validation
+- Intelligent content extraction and classification
+- Response cleaning and JSON parsing
 """
 
 import asyncio
@@ -32,7 +43,7 @@ class AIDecision:
     reasoning: str
     supporting_data: Dict[str, Any]
     timestamp: datetime
-    model_used: str = "deepseek-r1:8b"
+    model_used: str = "gemma3:4b"
 
 
 @dataclass
@@ -49,11 +60,11 @@ class ContactComparison:
 
 class AIAgentCore:
     """
-    AI Agent Core using DeepSeek-r1:8b via Ollama
+    AI Agent Core using Gemma3:4b via Ollama
     Provides intelligent decision making for the entire pipeline
     """
 
-    def __init__(self, ollama_url: str = "http://localhost:11434", model: str = "deepseek-r1:8b", max_retries: int = 3):
+    def __init__(self, ollama_url: str = "http://localhost:11434", model: str = "gemma3:4b", max_retries: int = 3):
         self.ollama_url = ollama_url
         self.model = model
         self.max_retries = max_retries
@@ -94,7 +105,7 @@ class AIAgentCore:
             self._session_initialized = False
 
     async def _make_ollama_request(self, prompt: str, system_prompt: str = "") -> str:
-        """Make a request to Ollama with DeepSeek model"""
+        """Make a request to Ollama with Gemma3:4b model"""
         await self._ensure_session()  # Ensure session is initialized
 
         start_time = time.time()
@@ -147,7 +158,7 @@ class AIAgentCore:
 
     def _clean_ai_response(self, response: str) -> str:
         """Clean AI response by removing thinking blocks and extracting JSON"""
-        # Remove <think>...</think> blocks that DeepSeek-r1 includes
+        # Remove <think>...</think> blocks that LLMs may include
         cleaned = re.sub(r"<think>.*?</think>", "", response, flags=re.DOTALL)
 
         # Clean up extra whitespace

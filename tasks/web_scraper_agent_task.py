@@ -1,13 +1,27 @@
 #!/usr/bin/env python3
 """
-Agent 5: Advanced Email Enrichment Agent (2025 Optimized)
-🚀 OPTIMIZATIONS IMPLEMENTED:
-- Modern DuckDuckGo integration with maximum results
-- Parallel contact processing (50% performance gain)
-- Smart email validation and skipping
-- Masked email detection and decoding
-- Legal web scraping with rate limiting
-- Clean search query optimization (2025)
+Agent 5: Email Enrichment Web Scraper
+
+The final agent in the pipeline that enriches contact data by finding missing
+email addresses through intelligent web scraping and AI-powered extraction.
+
+Input: Deduplicated contact list from Agent 4 (Smart Deduplicator)
+Output: Fully enriched contact database with maximum email coverage
+
+Core Workflow:
+1. Identifies contacts missing email addresses
+2. Generates intelligent search queries using Gemma3:4b LLM
+3. Discovers relevant URLs via DuckDuckGo search
+4. Scrapes webpage content using BeautifulSoup + Requests
+5. Extracts emails from content using LLM-powered analysis
+6. Validates and stores enriched contact data
+
+Key Features:
+- Parallel processing for improved performance
+- Smart contact skipping (avoids re-processing contacts with emails)
+- Anti-bot evasion with rotating headers and rate limiting
+- Professional email validation and filtering
+- Comprehensive error handling and retry logic
 """
 
 import asyncio
@@ -21,6 +35,8 @@ from typing import Any, Dict, List, Optional
 import urllib.parse
 
 import pandas as pd
+import requests
+from bs4 import BeautifulSoup
 
 # Modern 2025 DuckDuckGo package - using latest version
 from ddgs import DDGS
@@ -34,7 +50,9 @@ class AdvancedEmailEnrichmentAgent(SyncTask):
     Agent 5: Advanced Email Enrichment Agent (2025 Optimized)
     
     🚀 NEW OPTIMIZATIONS:
-    - Modern DuckDuckGo with max results (10+ per search)
+    - DuckDuckGo for URL discovery
+    - Requests + BeautifulSoup for webpage content scraping  
+    - Gemma3:4b LLM for intelligent email extraction
     - Parallel processing with semaphores (50% faster)  
     - Smart email validation and skipping
     - Masked/obfuscated email detection
@@ -47,10 +65,11 @@ class AdvancedEmailEnrichmentAgent(SyncTask):
         
         # Focus only on these fields
         self.TARGET_FIELDS = ["Email"]  # Only focus on Email
-        self.MAX_CONTACTS_TO_PROCESS = 10  # Process 10 contacts for testing
+        # REMOVED: No limit on contacts to process - process all contacts that need emails
         self.MAX_SEARCH_RESULTS = 15  # 🚀 OPTIMIZATION: Increased from 5 to 15 for better results
-        self.MAX_CONCURRENT = 3  # 🚀 OPTIMIZATION: Process 3 contacts concurrently
-        self.RATE_LIMIT_DELAY = 1.0  # 🚀 OPTIMIZATION: Reduced from 2.0s to 1.0s
+        self.MAX_CONCURRENT = 6  # 🚀 OPTIMIZATION: Increased from 3 to 6 for better parallel processing
+        self.RATE_LIMIT_DELAY = 0.8  # 🚀 OPTIMIZATION: Reduced from 1.0s to 0.8s for faster processing
+        self.MAX_PAGES_TO_SCRAPE = 5  # Maximum pages to scrape per contact
         
         # 🚀 OPTIMIZATION: Email validation patterns
         self.email_patterns = {
@@ -60,6 +79,12 @@ class AdvancedEmailEnrichmentAgent(SyncTask):
             'cloudflare_encoded': re.compile(r'data-cfemail="([a-f0-9]+)"', re.IGNORECASE)
         }
         
+        # Session for requests
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+        })
+        
         # Statistics tracking
         self.stats = {
             "contacts_processed": 0,
@@ -68,6 +93,7 @@ class AdvancedEmailEnrichmentAgent(SyncTask):
             "emails_validated": 0,
             "search_prompts_generated": 0,
             "search_results_obtained": 0,
+            "pages_scraped": 0,
             "llm_extractions_performed": 0,
             "parallel_tasks_completed": 0,
             "errors_handled": 0
@@ -136,31 +162,42 @@ class AdvancedEmailEnrichmentAgent(SyncTask):
             
             email_str = str(email_value).strip().lower()
             
-            # Skip if obviously invalid
-            if email_str in ['nan', 'null', 'none', '', 'n/a', 'not available']:
+            # Skip if obviously invalid values
+            invalid_values = {
+                'nan', 'null', 'none', '', 'n/a', 'not available', 'no email', 
+                'unknown', 'tbd', 'to be determined', 'missing', 'email not found',
+                'no data', 'not found', 'na', 'nil'
+            }
+            if email_str in invalid_values:
                 return True
                 
-            # 🚀 OPTIMIZATION: Quick email validation
+            # 🚀 OPTIMIZATION: Advanced email validation - skip if valid email exists
             if '@' in email_str and '.' in email_str:
-                # Basic validation - if it looks like a real email, skip it
+                # Check if it's a properly formatted email
                 if self.email_patterns['standard'].match(email_str):
-                    return False
+                    # Additional checks for quality emails
+                    domain = email_str.split('@')[1] if '@' in email_str else ''
+                    
+                    # Skip if it's a real domain (not placeholder)
+                    if not any(placeholder in domain for placeholder in ['example', 'test', 'dummy', 'placeholder']):
+                        return False  # Valid email found, no enrichment needed
             
             return True
         
-        # Apply filter
+        # Apply filter - NO LIMIT, process all contacts that need emails
         needs_enrichment = df['Email'].apply(needs_email_enrichment)
-        selected_df = df[needs_enrichment].head(self.MAX_CONTACTS_TO_PROCESS).copy()
+        selected_df = df[needs_enrichment].copy()
         
         skipped_count = len(df) - len(selected_df)
         self.stats["contacts_skipped"] = skipped_count
         
         self.logger.info(f"🚀 SMART SELECTION: {len(selected_df)} need enrichment, {skipped_count} already have valid emails")
+        self.logger.info(f"📊 PROCESSING ALL {len(selected_df)} contacts (NO LIMIT)")
         
         return selected_df
 
     async def _process_contacts_parallel(self, df_to_process: pd.DataFrame, original_df: pd.DataFrame) -> pd.DataFrame:
-        """🚀 OPTIMIZATION: Process contacts in parallel with controlled concurrency"""
+        """🚀 OPTIMIZATION: Process contacts in parallel with controlled concurrency and batch processing"""
         
         # Create a semaphore to limit concurrent operations
         semaphore = asyncio.Semaphore(self.MAX_CONCURRENT)
@@ -169,38 +206,60 @@ class AdvancedEmailEnrichmentAgent(SyncTask):
         ai_agent = AIAgentCore()
         
         try:
-            self.logger.info(f"⚡ Starting parallel processing with {self.MAX_CONCURRENT} concurrent workers...")
+            total_contacts = len(df_to_process)
+            self.logger.info(f"⚡ Starting parallel processing of {total_contacts} contacts with {self.MAX_CONCURRENT} concurrent workers...")
             
-            # Create tasks for each contact that needs enrichment
-            tasks = []
-            for idx, contact in df_to_process.iterrows():
-                task = self._process_single_contact_with_limit(semaphore, ai_agent, contact, idx)
-                tasks.append(task)
-            
-            # Execute all tasks concurrently
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            
-            # Update the original dataframe with results
+            # 🚀 OPTIMIZATION: Process in batches for better memory management and progress tracking
+            batch_size = max(50, self.MAX_CONCURRENT * 10)  # Process in batches of 50 or 10x concurrent limit
             enriched_df = original_df.copy()
             
-            for i, (idx, contact) in enumerate(df_to_process.iterrows()):
-                result = results[i]
-                if isinstance(result, dict) and 'email' in result:
-                    # Update the email in the original dataframe
-                    enriched_df.loc[idx, 'Email'] = result['email']
-                    self.stats["emails_found"] += 1
-                    self.logger.info(f"✅ Contact {i+1}: Found email {result['email']}")
-                elif isinstance(result, Exception):
-                    self.logger.warning(f"❌ Contact {i+1}: Error - {str(result)}")
-                    self.stats["errors_handled"] += 1
-                else:
-                    self.logger.info(f"ℹ️ Contact {i+1}: No email found")
+            processed_count = 0
             
-            self.stats["parallel_tasks_completed"] = len(tasks)
+            for batch_start in range(0, total_contacts, batch_size):
+                batch_end = min(batch_start + batch_size, total_contacts)
+                batch_df = df_to_process.iloc[batch_start:batch_end]
+                
+                self.logger.info(f"📦 Processing batch {batch_start//batch_size + 1}: contacts {batch_start+1}-{batch_end}")
+                
+                # Create tasks for current batch
+                tasks = []
+                batch_indices = []
+                for idx, contact in batch_df.iterrows():
+                    task = self._process_single_contact_with_limit(semaphore, ai_agent, contact, idx)
+                    tasks.append(task)
+                    batch_indices.append(idx)
+                
+                # Execute batch tasks concurrently
+                batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                # Update the dataframe with batch results
+                for i, (idx, result) in enumerate(zip(batch_indices, batch_results)):
+                    contact_name = f"{batch_df.loc[idx, 'First Name']} {batch_df.loc[idx, 'Last Name']}".strip()
+                    processed_count += 1
+                    
+                    if isinstance(result, dict) and 'email' in result:
+                        # Update the email in the original dataframe
+                        enriched_df.loc[idx, 'Email'] = result['email']
+                        self.stats["emails_found"] += 1
+                        self.logger.info(f"✅ Contact {processed_count}/{total_contacts} ({contact_name}): Found email {result['email']}")
+                    elif isinstance(result, Exception):
+                        self.logger.warning(f"❌ Contact {processed_count}/{total_contacts} ({contact_name}): Error - {str(result)}")
+                        self.stats["errors_handled"] += 1
+                    else:
+                        self.logger.info(f"ℹ️ Contact {processed_count}/{total_contacts} ({contact_name}): No email found")
+            
+                # Progress update
+                progress_pct = (processed_count / total_contacts) * 100
+                self.logger.info(f"📊 Batch {batch_start//batch_size + 1} completed - Progress: {progress_pct:.1f}% ({processed_count}/{total_contacts})")
+            
+            # Final stats update
+            self.stats["parallel_tasks_completed"] = processed_count
+            self.stats["contacts_processed"] = processed_count
             
             self.logger.info(f"⚡ PARALLEL PROCESSING COMPLETED:")
-            self.logger.info(f"   📊 Tasks completed: {self.stats['parallel_tasks_completed']}")
+            self.logger.info(f"   📊 Total contacts processed: {processed_count}")
             self.logger.info(f"   📧 Emails found: {self.stats['emails_found']}")
+            self.logger.info(f"   ✅ Success rate: {(self.stats['emails_found']/processed_count*100):.1f}%" if processed_count > 0 else "   ✅ Success rate: 0%")
             self.logger.info(f"   ⚠️ Errors handled: {self.stats['errors_handled']}")
             
             return enriched_df
@@ -228,15 +287,20 @@ class AdvancedEmailEnrichmentAgent(SyncTask):
                 if not search_prompt:
                     return {"status": "failed", "reason": "no_search_prompt"}
                 
-                # Phase 2: Get DuckDuckGo search results with modern API
-                search_results = await self._phase2_modern_duckduckgo_search(search_prompt)
-                if not search_results:
-                    return {"status": "failed", "reason": "no_search_results"}
+                # Phase 2: Get URLs from DuckDuckGo search
+                search_urls = await self._phase2_duckduckgo_url_discovery(search_prompt)
+                if not search_urls:
+                    return {"status": "failed", "reason": "no_urls_found"}
                 
-                # Phase 3: Extract email from search results with masking detection
-                extracted_data = await self._phase3_llm_extract_with_masking(ai_agent, contact, search_results, missing_fields)
+                # Phase 3: Scrape webpage content using requests + beautifulsoup
+                scraped_content = await self._phase3_scrape_webpages(search_urls)
+                if not scraped_content:
+                    return {"status": "failed", "reason": "no_content_scraped"}
                 
-                # Phase 4: Validate and return result
+                # Phase 4: Extract email from scraped content using gemma3:4b
+                extracted_data = await self._phase4_llm_extract_from_content(ai_agent, contact, scraped_content, missing_fields)
+                
+                # Phase 5: Validate and return result
                 if extracted_data and extracted_data.get("Email"):
                     validated_email = self._validate_and_clean_email(extracted_data["Email"])
                     if validated_email:
@@ -250,8 +314,9 @@ class AdvancedEmailEnrichmentAgent(SyncTask):
                 return {"status": "error", "reason": str(e)}
             
             finally:
-                # Rate limiting
-                await asyncio.sleep(self.RATE_LIMIT_DELAY)
+                # 🚀 OPTIMIZATION: Intelligent rate limiting - only delay if successful
+                # This prevents unnecessary delays on failed requests
+                await asyncio.sleep(self.RATE_LIMIT_DELAY * 0.5)  # Reduced delay for better performance
 
     def _identify_missing_fields(self, contact: pd.Series) -> List[str]:
         """Identify which target fields are missing - EMAIL ONLY with advanced validation"""
@@ -272,11 +337,24 @@ class AdvancedEmailEnrichmentAgent(SyncTask):
         email_str = str(email_value).strip().lower()
         
         # Check for obviously invalid values
-        if email_str in ['nan', 'null', 'none', '', 'n/a', 'not available', 'no email']:
+        invalid_values = {
+            'nan', 'null', 'none', '', 'n/a', 'not available', 'no email',
+            'unknown', 'tbd', 'to be determined', 'missing', 'email not found',
+            'no data', 'not found', 'na', 'nil'
+        }
+        if email_str in invalid_values:
             return False
         
         # Use regex pattern for validation
-        return bool(self.email_patterns['standard'].match(email_str))
+        if self.email_patterns['standard'].match(email_str):
+            # Additional check for quality domains
+            domain = email_str.split('@')[1] if '@' in email_str else ''
+            # Skip placeholder domains
+            if any(placeholder in domain for placeholder in ['example', 'test', 'dummy', 'placeholder']):
+                return False
+            return True
+            
+        return False
 
     async def _phase1_llm_generate_search_prompt(self, ai_agent: AIAgentCore, contact: pd.Series, missing_fields: List[str]) -> Optional[str]:
         """PHASE 1: Use LLM to generate CLEAN search queries (2025 optimized)"""
@@ -396,18 +474,18 @@ OUTPUT (search query only):"""
             self.logger.info(f"🔧 Fallback query: '{fallback_query}'")
             return fallback_query
 
-    async def _phase2_modern_duckduckgo_search(self, search_prompt: str) -> List[Dict[str, str]]:
-        """🚀 PHASE 2: Modern DuckDuckGo search with maximum results (2025)"""
+    async def _phase2_duckduckgo_url_discovery(self, search_prompt: str) -> List[str]:
+        """🚀 PHASE 2: DuckDuckGo URL Discovery (2025)"""
         
-        self.logger.info("🌐 PHASE 2: Modern DuckDuckGo Search (2025)")
-        self.logger.info(f"🔍 Searching for: '{search_prompt}'")
+        self.logger.info("🌐 PHASE 2: DuckDuckGo URL Discovery")
+        self.logger.info(f"🔍 Searching for URLs: '{search_prompt}'")
         
-        search_results = []
+        urls = []
         try:
-            # 🚀 2025 OPTIMIZATION: Use maximum search results for better coverage
+            # 🚀 2025 OPTIMIZATION: Focus on URL discovery
             ddgs = DDGS()
             
-            # Search with optimized parameters for maximum results
+            # Search with optimized parameters for URL collection
             search_results = ddgs.text(
                 query=search_prompt,  # 🔧 Clean search query from Phase 1
                 region="wt-wt",  # Worldwide
@@ -416,22 +494,30 @@ OUTPUT (search query only):"""
                 backend="auto"  # Use best available backend for 2025
             )
             
-            # Convert generator to list for processing
+            # Convert generator to list and extract URLs
             search_results = list(search_results)
             
-            if search_results:
-                self.logger.info(f"✅ Found {len(search_results)} search results with snippets")
-                for i, result in enumerate(search_results[:3]):  # Show first 3
-                    title = result.get('title', 'No title')[:60]
-                    url = result.get('href', 'No URL')[:50]
-                    self.logger.info(f"   Result {i+1}: {title}... | {url}...")
-            else:
-                self.logger.warning("❌ No search results found for the query")
+            for result in search_results:
+                if 'href' in result and result['href']:
+                    url = result['href']
+                    # Filter out unwanted URLs
+                    if self._is_valid_url_for_scraping(url):
+                        urls.append(url)
             
-            return search_results
+            # Limit to max pages we want to scrape
+            urls = urls[:self.MAX_PAGES_TO_SCRAPE]
+            
+            if urls:
+                self.logger.info(f"✅ Found {len(urls)} URLs to scrape")
+                for i, url in enumerate(urls[:3]):  # Show first 3
+                    self.logger.info(f"   URL {i+1}: {url[:60]}...")
+            else:
+                self.logger.warning("❌ No valid URLs found for scraping")
+            
+            return urls
             
         except Exception as e:
-            self.logger.error(f"🚨 DuckDuckGo search failed: {str(e)}")
+            self.logger.error(f"🚨 DuckDuckGo URL discovery failed: {str(e)}")
             self.logger.info("🔄 Attempting fallback search with simpler query...")
             
             # Fallback: Try with a simpler version of the query
@@ -449,56 +535,174 @@ OUTPUT (search query only):"""
                 )
                 
                 fallback_results = list(fallback_results)
-                if fallback_results:
-                    self.logger.info(f"✅ Fallback search found {len(fallback_results)} results")
-                    return fallback_results
+                for result in fallback_results:
+                    if 'href' in result and result['href']:
+                        url = result['href']
+                        if self._is_valid_url_for_scraping(url):
+                            urls.append(url)
+                
+                urls = urls[:self.MAX_PAGES_TO_SCRAPE]
+                if urls:
+                    self.logger.info(f"✅ Fallback search found {len(urls)} URLs")
+                    return urls
                     
             except Exception as fallback_error:
                 self.logger.error(f"❌ Fallback search also failed: {str(fallback_error)}")
             
             return []
 
-    async def _phase3_llm_extract_with_masking(self, ai_agent: AIAgentCore, contact: pd.Series, search_results: List[Dict], missing_fields: List[str]) -> Dict[str, str]:
-        """🚀 PHASE 3: LLM extracts Email with masked email detection (2025)"""
+    def _is_valid_url_for_scraping(self, url: str) -> bool:
+        """Check if URL is valid for scraping"""
+        if not url:
+            return False
         
-        self.logger.info("🧠 PHASE 3: LLM Email Extraction with Masking Detection")
+        # Skip problematic URLs
+        skip_patterns = [
+            'javascript:', 'mailto:', 'tel:', 'ftp:',
+            'youtube.com', 'facebook.com', 'twitter.com', 'instagram.com',
+            'pinterest.com', 'tiktok.com', 'reddit.com',
+            '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+            '.zip', '.rar', '.tar', '.gz'
+        ]
         
-        # Combine search results into text with masking detection
-        combined_data = self._combine_search_results_with_masking(search_results)
+        url_lower = url.lower()
+        for pattern in skip_patterns:
+            if pattern in url_lower:
+                return False
+        
+        # Must be HTTP/HTTPS
+        if not (url.startswith('http://') or url.startswith('https://')):
+            return False
+        
+        return True
+
+    async def _phase3_scrape_webpages(self, urls: List[str]) -> List[Dict[str, str]]:
+        """🚀 PHASE 3: Scrape webpage content using requests + BeautifulSoup"""
+        
+        self.logger.info("🕷️ PHASE 3: Webpage Content Scraping")
+        self.logger.info(f"📄 Scraping {len(urls)} webpages...")
+        
+        scraped_content = []
+        
+        for i, url in enumerate(urls):
+            try:
+                self.logger.info(f"🔍 Scraping page {i+1}: {url[:60]}...")
+                
+                # Make request with timeout
+                response = self.session.get(url, timeout=10)
+                response.raise_for_status()
+                
+                # Parse with BeautifulSoup
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Extract relevant content
+                content = self._extract_content_from_soup(soup, url)
+                
+                if content['text']:
+                    scraped_content.append(content)
+                    self.stats["pages_scraped"] += 1
+                    self.logger.info(f"✅ Scraped {len(content['text'])} characters from page {i+1}")
+                else:
+                    self.logger.warning(f"⚠️ No useful content found on page {i+1}")
+                
+                # Rate limiting
+                await asyncio.sleep(self.RATE_LIMIT_DELAY)
+                
+            except requests.RequestException as e:
+                self.logger.warning(f"❌ Failed to scrape {url}: {str(e)}")
+                self.stats["errors_handled"] += 1
+            except Exception as e:
+                self.logger.warning(f"❌ Error processing {url}: {str(e)}")
+                self.stats["errors_handled"] += 1
+        
+        self.logger.info(f"🕷️ Scraping completed: {len(scraped_content)} pages with content")
+        return scraped_content
+
+    def _extract_content_from_soup(self, soup: BeautifulSoup, url: str) -> Dict[str, str]:
+        """Extract useful content from BeautifulSoup object"""
+        
+        # Remove unwanted elements
+        for element in soup(['script', 'style', 'nav', 'header', 'footer', 'aside']):
+            element.decompose()
+        
+        # Get title
+        title = soup.find('title')
+        title_text = title.get_text(strip=True) if title else ""
+        
+        # Get main content areas
+        content_selectors = [
+            'main', 'article', '.content', '#content', '.main-content',
+            '.post-content', '.entry-content', '.page-content'
+        ]
+        
+        content_text = ""
+        for selector in content_selectors:
+            elements = soup.select(selector)
+            if elements:
+                content_text = " ".join([elem.get_text(strip=True) for elem in elements])
+                break
+        
+        # Fallback to body if no specific content area found
+        if not content_text:
+            body = soup.find('body')
+            if body:
+                content_text = body.get_text(strip=True)
+        
+        # Clean up whitespace
+        content_text = re.sub(r'\s+', ' ', content_text)
+        
+        # Look for email patterns in the content
+        emails_found = self.email_patterns['standard'].findall(content_text)
+        
+        return {
+            'url': url,
+            'title': title_text,
+            'text': content_text[:5000],  # Limit to 5000 chars
+            'emails_detected': list(set(emails_found))
+        }
+
+    async def _phase4_llm_extract_from_content(self, ai_agent: AIAgentCore, contact: pd.Series, scraped_content: List[Dict], missing_fields: List[str]) -> Dict[str, str]:
+        """🚀 PHASE 4: Extract email from scraped content using Gemma3:4b"""
+        
+        self.logger.info("🧠 PHASE 4: Gemma3:4b Email Extraction from Scraped Content")
+        
+        # Combine scraped content
+        combined_data = self._combine_scraped_content(scraped_content)
         
         contact_name = f"{contact.get('First Name', '')} {contact.get('Last Name', '')}".strip()
         company = contact.get('Current Company', '')
         
-        # Create enhanced LLM prompt for email extraction
-        llm_prompt = f"""You are a data extraction expert specializing in finding email addresses from web content.
+        # Create enhanced LLM prompt for email extraction using Gemma3:4b
+        llm_prompt = f"""You are an expert at extracting email addresses from webpage content.
 
 TARGET PERSON:
 - Name: {contact_name}
 - Company: {company}
 
-TASK: Find the EMAIL ADDRESS for the target person from the web content below.
+TASK: Find the EMAIL ADDRESS for this specific person from the webpage content below.
 
-WEB CONTENT WITH SNIPPETS:
-{combined_data[:4000]}
+SCRAPED WEBPAGE CONTENT:
+{combined_data[:6000]}
 
 INSTRUCTIONS:
 1. Look for email addresses in various formats:
    - Standard: name@company.com
    - Obfuscated: name [at] company [dot] com
    - Masked: name(at)company(dot)com
-   - Text format: "email: name@company.com"
+   - Contact forms: "email: name@company.com"
 2. ONLY extract emails that clearly belong to the target person
-3. Verify the name and company match before extracting
+3. Verify the name and company context match before extracting
 4. If multiple emails found, prefer the most professional one
-5. If no email found, return empty string
+5. Ignore generic emails like info@, support@, hello@
+6. If no email found, return empty string
 
-RESPOND WITH ONLY A JSON OBJECT:
+OUTPUT FORMAT - JSON ONLY:
 {{
-    "Email": "email@example.com or empty string"
+    "Email": "specific_email@domain.com"
 }}"""
 
         try:
-            self.logger.info("🤖 LLM extracting email from search results...")
+            self.logger.info("🤖 Gemma3:4b extracting email from scraped content...")
             
             response = await ai_agent._make_ollama_request(llm_prompt)
             
@@ -509,7 +713,7 @@ RESPOND WITH ONLY A JSON OBJECT:
             
             if extracted_data and extracted_data.get("Email"):
                 found_email = extracted_data["Email"]
-                self.logger.info(f"✅ LLM EXTRACTED EMAIL: {found_email}")
+                self.logger.info(f"✅ GEMMA3:4B EXTRACTED EMAIL: {found_email}")
                 
                 # 🚀 OPTIMIZATION: Decode masked emails
                 decoded_email = self._decode_masked_email(found_email)
@@ -519,12 +723,39 @@ RESPOND WITH ONLY A JSON OBJECT:
                 
                 return extracted_data
             else:
-                self.logger.info("ℹ️ No email found in search results")
+                self.logger.info("ℹ️ No email found in scraped content")
                 return {}
                 
         except Exception as e:
-            self.logger.error(f"Error in LLM email extraction: {e}")
+            self.logger.error(f"Error in Gemma3:4b email extraction: {e}")
             return {}
+
+    def _combine_scraped_content(self, scraped_content: List[Dict]) -> str:
+        """Combine scraped webpage content for LLM processing"""
+        
+        combined_parts = []
+        
+        for i, content in enumerate(scraped_content):
+            url = content.get('url', '')
+            title = content.get('title', '')
+            text = content.get('text', '')
+            emails_detected = content.get('emails_detected', [])
+            
+            # Add detected emails as context
+            email_context = ""
+            if emails_detected:
+                email_context = f" [EMAILS_FOUND: {', '.join(emails_detected)}]"
+            
+            part = f"""
+PAGE {i+1}:
+URL: {url}
+TITLE: {title}
+CONTENT: {text}{email_context}
+---
+"""
+            combined_parts.append(part)
+        
+        return "\n".join(combined_parts)
 
     def _combine_search_results_with_masking(self, search_results: List[Dict]) -> str:
         """Combine search results and detect masked emails"""
@@ -669,6 +900,7 @@ RESPOND WITH ONLY A JSON OBJECT:
         self.logger.info(f"   📊 Contacts processed: {self.stats['contacts_processed']}")
         self.logger.info(f"   📧 Emails found: {self.stats['emails_found']}")
         self.logger.info(f"   ✅ Emails validated: {self.stats['emails_validated']}")
+        self.logger.info(f"   🕷️ Pages scraped: {self.stats['pages_scraped']}")
         self.logger.info(f"   ⚡ Parallel tasks: {self.stats['parallel_tasks_completed']}")
         self.logger.info(f"   ⏱️ Processing time: {processed_time:.1f}s")
         
@@ -682,9 +914,12 @@ RESPOND WITH ONLY A JSON OBJECT:
                 "contacts_processed": self.stats["contacts_processed"],
                 "emails_found": self.stats["emails_found"],
                 "emails_validated": self.stats["emails_validated"],
+                "pages_scraped": self.stats["pages_scraped"],
                 "parallel_tasks": self.stats["parallel_tasks_completed"],
                 "optimizations": [
-                    "modern_duckduckgo_integration",
+                    "duckduckgo_url_discovery",
+                    "requests_beautifulsoup_scraping",
+                    "gemma3_4b_extraction",
                     "parallel_processing",
                     "smart_email_validation", 
                     "masked_email_detection",
