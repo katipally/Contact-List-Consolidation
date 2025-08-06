@@ -1,0 +1,28 @@
+{
+  "source_file": "output/agent_1_file_converter/Copy of Copy of Naresh Contacts 2025_All Contacts.csv",
+  "output_file": "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_All Contacts.csv",
+  "original_shape": [
+    25132,
+    35
+  ],
+  "standardized_shape": [
+    25132,
+    8
+  ],
+  "fields_identified": {
+    "First Name": "First Name",
+    "Last Name": "Last Name",
+    "Original Title": "Designation / Role",
+    "New Company": "Current Company",
+    "New Title": "Designation / Role",
+    "New Email": "Email",
+    "0C: Connect/Converse on LinkedIn": "LinkedIn Profile URL",
+    "Mobile": "Phone Number",
+    "City": "Geo (Location by City)",
+    "State": "Geo (Location by City)",
+    "Street": "Geo (Location by City)"
+  },
+  "anomalies_detected": [],
+  "data_quality": 90,
+  "processing_method": "intelligent_content_analysis"
+}

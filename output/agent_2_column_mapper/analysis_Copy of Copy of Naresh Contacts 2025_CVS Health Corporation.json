@@ -1,0 +1,36 @@
+{
+  "source_file": "output/agent_1_file_converter/Copy of Copy of Naresh Contacts 2025_CVS Health Corporation.csv",
+  "output_file": "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_CVS Health Corporation.csv",
+  "original_shape": [
+    108,
+    19
+  ],
+  "standardized_shape": [
+    108,
+    8
+  ],
+  "fields_identified": {
+    "First Name": "First Name",
+    "Last Name": "Last Name",
+    "Original Title": "Current Company",
+    "Column 12": "Designation / Role",
+    "New Company": "Current Company",
+    "New Title": "Designation / Role",
+    "New Email": "Email",
+    "Status": "Email",
+    "Email": "Email",
+    "0C: Connect/Converse on LinkedIn": "LinkedIn Profile URL",
+    "Phone": "Phone Number",
+    "Mobile": "Phone Number",
+    "Product": "Designation / Role",
+    "Industry": "Designation / Role",
+    "Column 1": "Designation / Role",
+    "State": "Geo (Location by City)",
+    "Unnamed: 16": "Designation / Role",
+    "Total": "Designation / Role",
+    "1": "Designation / Role"
+  },
+  "anomalies_detected": [],
+  "data_quality": 90,
+  "processing_method": "intelligent_content_analysis"
+}

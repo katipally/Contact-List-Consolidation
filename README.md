@@ -1,140 +1,89 @@
-# AI-Powered Contact Consolidation Pipeline
+# Contact Consolidation Pipeline
 
-A modern Python 3.11+ application that consolidates and enriches contact data using a 5-agent architecture with LLM integration.
+A Python pipeline that processes messy contact data using 6 AI agents to clean, deduplicate, and enrich contact information.
 
-## Features
+## What It Does
 
-🤖 **5-Agent Architecture**
-- **Agent 1**: File Converter (Excel/CSV → CSV)
-- **Agent 2**: Enhanced Column Mapper (LLM maps to standard columns)
-- **Agent 3**: Data Consolidator (combine all normalized sheets)
-- **Agent 4**: Smart Deduplicator (LLM removes duplicates safely)
-- **Agent 5**: Web Scraper (TOP 5 contacts, fill missing data)
+Takes messy Excel/CSV files with contact data → Outputs clean, deduplicated contacts ready for CRM import.
 
-🚀 **2025 Technology Stack**
-- Python 3.11+ with modern async/await patterns
-- Ollama integration for local LLM processing
-- RapidFuzz C++ optimization for 8x faster fuzzy matching
-- Advanced memory management with performance monitoring
-- Circuit breaker pattern for resilience
+## How Each Agent Works
 
-⚡ **Performance Optimizations**
-- Memory-efficient TF-IDF semantic analysis
-- Intelligent blocking for large datasets
-- Real-time performance monitoring
-- Adaptive optimization algorithms
+1. **Agent 1 (File Converter)** - Converts files to CSV format with lossless Excel processing (all sheets)
+2. **Agent 2 (Column Mapper)** - Maps different column names to standard format using AI
+3. **Agent 3 (Data Consolidator)** - Combines all files into one master dataset
+4. **Agent 4 (Smart Deduplicator)** - Intelligently merges duplicate contacts without losing data
+5. **Agent 5 (Email Enrichment)** - Finds missing emails through web scraping and AI extraction
+6. **Agent 6 (CRM Exporter)** - Creates clean files ready for Apollo and HubSpot import
 
-## Quick Start
+## Setup
 
 ### Prerequisites
+- Python 3.11+
+- Ollama with Gemma3:4b model
 
-- Python 3.11 or higher
-- Ollama with DeepSeek-r1:8b model
-
-### Installation
-
+### Install Ollama & Model
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd CL
+# Install Ollama
+curl -fsSL https://ollama.ai/install.sh | sh
 
-# Install dependencies (modern way)
-pip install -e .
+# Download the model
+ollama pull gemma3:4b
 
-# Or using uv (recommended for 2025)
-uv pip install -e .
+# Start Ollama (keep running in background)
+ollama serve
 ```
 
-### Running the Pipeline
-
+### Install Dependencies
 ```bash
-# Run the complete 5-agent pipeline
-python test_new_agent_pipeline.py
+pip install -r requirements.txt
 ```
 
-### Project Structure
+## How to Use
 
+1. **Put your contact files** in the `DataSource/` folder
+   - Supports `.xlsx` and `.csv` or any spreadsheet files
+   - Any column names (AI will map them)
+
+2. **Make sure Ollama is running** with Gemma3:4b model
+
+3. **Run the pipeline:**
+```bash
+python run_pipeline.py
 ```
-CL/
-├── DataSource/                 # Input Excel/CSV files
-├── output/                     # Agent outputs (separate subfolders)
-│   ├── agent_1_file_converter/
-│   ├── agent_2_column_mapper/
-│   ├── agent_3_data_consolidator/
-│   ├── agent_4_smart_deduplicator/
-│   └── agent_5_web_scraper/
-├── tasks/                      # Agent implementations
-├── utils/                      # Utility modules
-├── enhanced_pipeline_main.py   # Main entry point
-└── master_orchestrator.py     # Pipeline orchestration
-```
+
+4. **Wait for completion** (can take 30-60 minutes or more depending on file)
+
+5. **Check results** in the `output/` folder:
+   ```
+   output/
+   ├── agent_1_file_converter/     # Converted CSV files (one per Excel sheet)
+   ├── agent_2_column_mapper/      # Mapped to standard columns
+   ├── agent_3_data_consolidator/  # Combined master dataset
+   ├── agent_4_smart_deduplicator/ # Deduplicated without data loss
+   ├── agent_5_email_enrichment/   # Web-scraped email enhancement
+   └── agent_6_csv_cleaner_crm_exporter/ # CRM-ready files
+   ```
+
+The final CRM-ready files are in `agent_6_csv_cleaner_crm_exporter/`.
 
 ## Standard Columns
 
-The pipeline normalizes all contact data to these standard columns:
+All output uses these columns:
+- First Name, Last Name
+- Current Company, Designation / Role
+- Email, Phone Number
+- LinkedIn Profile URL, Geo (Location by City)
 
-- **First Name**
-- **Last Name**
-- **Current Company**
-- **Designation / Role**
-- **LinkedIn Profile URL**
-- **Email**
-- **Phone Number**
-- **Geo (Location by City)**
+## Troubleshooting
 
-## Configuration
-
-The pipeline uses modern Python configuration patterns:
-
-- `pyproject.toml` for project metadata and dependencies
-- Environment variables for API keys
-- LLM models via Ollama local installation
-
-## Development
-
-### Code Quality
-
-This project follows 2025 Python best practices:
-
+**Ollama not working?**
 ```bash
-# Format code
-ruff format .
-
-# Lint code
-ruff check .
-
-# Type checking
-mypy .
-
-# Run tests
-pytest
+ollama list  # Check if model is installed
+ollama serve # Make sure it's running
 ```
 
-### Modern Python Features Used
+**Pipeline fails?** Check the logs in terminal for specific errors.
 
-- **Type hints** throughout
-- **Dataclasses** for data objects
-- **Async/await** for concurrent operations
-- **Context managers** for resource management
-- **Pathlib** for file operations
-- **F-strings** for string formatting
+**Out of memory?** Process smaller batches of files.
 
-## Performance
-
-The pipeline is optimized for:
-
-- **Speed**: 8x faster fuzzy matching with RapidFuzz C++
-- **Memory**: Advanced memory management with `__slots__`
-- **Reliability**: Circuit breaker patterns and intelligent fallbacks
-- **Safety**: Conservative 85%+ preservation rate for contacts
-
-## Contributing
-
-1. Follow the existing code style (ruff format)
-2. Add type hints to all functions
-3. Write tests for new features
-4. Update documentation
-
-## License
-
-MIT License - see LICENSE file for details. 
+That's it! The pipeline handles the rest automatically. 

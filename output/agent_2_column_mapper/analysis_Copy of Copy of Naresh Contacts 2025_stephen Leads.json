@@ -1,0 +1,23 @@
+{
+  "source_file": "output/agent_1_file_converter/Copy of Copy of Naresh Contacts 2025_stephen Leads.csv",
+  "output_file": "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_stephen Leads.csv",
+  "original_shape": [
+    50,
+    6
+  ],
+  "standardized_shape": [
+    50,
+    8
+  ],
+  "fields_identified": {
+    "Name": "FULL_NAME_TO_SPLIT",
+    "Title": "Designation / Role",
+    "City/ State": "Geo (Location by City)",
+    "Linkedin": "LinkedIn Profile URL",
+    "Email": "Email",
+    "Comment": null
+  },
+  "anomalies_detected": [],
+  "data_quality": 90,
+  "processing_method": "intelligent_content_analysis"
+}

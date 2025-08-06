@@ -1,7 +1,24 @@
 #!/usr/bin/env python3
 """
-Master Orchestrator - React-style Component Architecture
-Coordinates all pipeline tasks with dependency management and parallel execution
+Master Orchestrator - Pipeline Coordination Hub
+
+Central orchestrator that manages the execution of all 5 agents in the correct
+sequence with proper dependency management, error handling, and result tracking.
+
+Coordinates the complete pipeline flow:
+Agent 1 (File Converter) → Agent 2 (Column Mapper) → Agent 3 (Data Consolidator) 
+→ Agent 4 (Smart Deduplicator) → Agent 5 (Email Enrichment)
+
+Used by:
+- run_pipeline.py as the main entry point for pipeline execution
+- Any script requiring programmatic pipeline execution
+
+Key Responsibilities:
+- Sequential agent execution with dependency validation
+- Inter-agent data flow management
+- Comprehensive error handling and recovery
+- Performance monitoring and result tracking
+- Output file organization and validation
 """
 
 import asyncio
@@ -17,12 +34,13 @@ import pandas as pd
 # Core task imports
 from tasks.base_task import BaseTask, TaskConfig, PipelineContext, TaskStatus, TaskResult
 
-# Active 5-Agent Pipeline Tasks (2025)
+# Active 6-Agent Pipeline Tasks (2025)
 from tasks.file_converter_task import FileConverterTask
 from tasks.column_mapper_agent_task import DataContentAnalyzer
 from tasks.data_consolidator_agent_task import DataConsolidatorAgentTask
 from tasks.smart_deduplicator_agent_task import SmartDeduplicatorAgentTask
 from tasks.web_scraper_agent_task import AdvancedEmailEnrichmentAgent
+from tasks.csv_cleaner_crm_exporter_task import CSVCleanerCRMExporter
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +64,7 @@ class TaskFactory:
         "data_consolidator_agent": DataConsolidatorAgentTask,  # Agent 3
         "smart_deduplicator_agent": SmartDeduplicatorAgentTask,  # Agent 4
         "web_scraper_agent": AdvancedEmailEnrichmentAgent,  # Agent 5
+        "csv_cleaner_crm_exporter": CSVCleanerCRMExporter,  # Agent 6
     }
     
     @classmethod
@@ -121,55 +140,21 @@ class MasterOrchestrator:
     
     def create_standard_pipeline(
         self,
-                                source_directory: str = "DataSource",
-                                output_directory: str = "output",
-                                min_quality_score: float = 25.0,
-                                apollo_quality_threshold: float = 60.0,
-        hubspot_quality_threshold: float = 50.0,
+        source_directory: str = "DataSource",
+        output_directory: str = "output",
         enable_ai_enhancements: bool = True,
     ) -> "MasterOrchestrator":
         """
-        Create the standard AI-enhanced contact processing pipeline
-        React-style component composition with AI capabilities
+        Create the standard 5-agent contact processing pipeline
+        Uses the modern agent-based architecture
         """
-        logger.info("Creating AI-enhanced contact processing pipeline")
+        logger.info("Creating 5-agent contact processing pipeline")
         
-        # Configure pipeline with provided parameters
-        pipeline_config = {
-            "source_directory": source_directory,
-            "output_directory": output_directory,
-            "min_quality_score": min_quality_score,
-            "apollo_quality_threshold": apollo_quality_threshold,
-            "hubspot_quality_threshold": hubspot_quality_threshold,
-            "similarity_threshold": 0.85,
-            "strict_email_matching": True,
-            "use_ai_enhancement": enable_ai_enhancements,
-            "enable_ai_verification": enable_ai_enhancements,
-            "enable_duckduckgo_search": True,
-        }
-        
-        # Build the AI-enhanced pipeline with proper dependencies
-        (
-            self.register_task("input_format_converter", dependencies=[], config=pipeline_config)
-            .register_task("contact_enrichment", dependencies=["input_format_converter"], config=pipeline_config)
-            .register_task("file_discovery", dependencies=["input_format_converter"], config=pipeline_config)
-            .register_task("column_mapping", dependencies=["file_discovery"], config=pipeline_config)
-            .register_task("data_extraction", dependencies=["file_discovery", "column_mapping"], config=pipeline_config)
-            .register_task("deduplication", dependencies=["data_extraction"], config=pipeline_config)
-            .register_task("replacement_discovery", dependencies=["contact_enrichment"], config=pipeline_config)
-            .register_task(
-                "export_apollo",
-                dependencies=["replacement_discovery", "contact_enrichment", "deduplication"],
-                config=pipeline_config,
-            )
-            .register_task(
-                "export_hubspot",
-                dependencies=["replacement_discovery", "contact_enrichment", "deduplication"],
-                config=pipeline_config,
-            )
+        # Use the agent-based pipeline as the standard
+        return self.create_agent_based_pipeline(
+            source_directory=source_directory,
+            output_directory=output_directory
         )
-
-        return self
 
     def create_agent_based_pipeline(
         self, source_directory: str = "DataSource", output_directory: str = "output"
@@ -178,7 +163,7 @@ class MasterOrchestrator:
         Create agent-based pipeline following the user's exact vision:
 
         Agent 1: File Converter → Agent 2: Column Mapper → Agent 3: Data Consolidator →
-        Agent 4: Smart Deduplicator → Agent 5: Web Scraper
+        Agent 4: Smart Deduplicator → Agent 5: Web Scraper → Agent 6: CSV Cleaner & CRM Exporter
 
         Each agent has separate output folders and verification
         """
@@ -218,6 +203,11 @@ class MasterOrchestrator:
             .register_task(
                 "web_scraper_agent",  # Agent 5: Fill missing data
                 dependencies=["smart_deduplicator_agent"],
+                config=pipeline_config,
+            )
+            .register_task(
+                "csv_cleaner_crm_exporter",  # Agent 6: Clean & export CRM files
+                dependencies=["web_scraper_agent"],
                 config=pipeline_config,
             )
         )
@@ -408,18 +398,23 @@ class MasterOrchestrator:
         return report
     
     def _collect_output_files(self) -> Dict[str, str]:
-        """Collect paths to generated output files"""
+        """Collect paths to generated output files from 5-agent pipeline"""
         output_files = {}
         
-        # Check Apollo export
-        apollo_result = self.context.get_task_result("export_apollo")
-        if apollo_result and apollo_result.status == TaskStatus.SUCCESS:
-            output_files["apollo_export"] = apollo_result.data.get("apollo_file_path", "")
+        # Check Agent 5 (Web Scraper) - Final output
+        web_scraper_result = self.context.get_task_result("web_scraper_agent")
+        if web_scraper_result and web_scraper_result.status == TaskStatus.SUCCESS:
+            output_files["final_enriched_contacts"] = web_scraper_result.data.get("output_file", "")
         
-        # Check HubSpot export
-        hubspot_result = self.context.get_task_result("export_hubspot")
-        if hubspot_result and hubspot_result.status == TaskStatus.SUCCESS:
-            output_files["hubspot_export"] = hubspot_result.data.get("hubspot_file_path", "")
+        # Check Agent 4 (Smart Deduplicator) - Deduplicated output
+        deduplicator_result = self.context.get_task_result("smart_deduplicator_agent")
+        if deduplicator_result and deduplicator_result.status == TaskStatus.SUCCESS:
+            output_files["deduplicated_contacts"] = deduplicator_result.data.get("output_file", "")
+        
+        # Check Agent 3 (Data Consolidator) - Consolidated output
+        consolidator_result = self.context.get_task_result("data_consolidator_agent")
+        if consolidator_result and consolidator_result.status == TaskStatus.SUCCESS:
+            output_files["consolidated_contacts"] = consolidator_result.data.get("output_file", "")
         
         return output_files
     
@@ -478,44 +473,25 @@ class MasterOrchestrator:
 
 # Convenience functions for common use cases
 def create_standard_pipeline(**kwargs) -> MasterOrchestrator:
-    """Create a standard contact processing pipeline with default configuration"""
+    """Create a standard 5-agent contact processing pipeline with default configuration"""
     orchestrator = MasterOrchestrator()
-    return orchestrator.create_standard_pipeline(**kwargs)
+    return orchestrator.create_agent_based_pipeline(**kwargs)
 
 
 async def run_quick_consolidation(
-    source_directory: str = "DataSource", output_directory: str = "output"
+    source_directory: str = "DataSource", 
+    output_directory: str = "output"
 ) -> Dict[str, Any]:
-    """Run quick consolidation without enrichment but with universal input handling"""
-    config = {
-        "source_directory": source_directory,
-        "output_directory": output_directory,
-        "use_ai_enhancement": False,  # Disable AI for quick mode
-    }
-
-    orchestrator = (
-        MasterOrchestrator()
-        .register_task("input_format_converter", config=config)
-        .register_task("file_discovery", dependencies=["input_format_converter"], config=config)
-        .register_task("column_mapping", dependencies=["file_discovery"], config=config)
-        .register_task("data_extraction", dependencies=["file_discovery", "column_mapping"], config=config)
-        .register_task("deduplication", dependencies=["data_extraction"], config=config)
-        .register_task(
-            "export_apollo",
-            dependencies=["replacement_discovery", "contact_enrichment", "deduplication"],
-            config=config,
-        )
-        .register_task(
-            "export_hubspot",
-            dependencies=["replacement_discovery", "contact_enrichment", "deduplication"],
-            config=config,
-        )
+    """Run quick 5-agent consolidation pipeline"""
+    orchestrator = MasterOrchestrator()
+    orchestrator.create_agent_based_pipeline(
+        source_directory=source_directory,
+        output_directory=output_directory
     )
-    
     return await orchestrator.execute_pipeline()
 
 
 async def run_complete_pipeline(**kwargs) -> Dict[str, Any]:
-    """Run the complete pipeline with all standard tasks"""
+    """Run the complete 5-agent pipeline with all standard tasks"""
     orchestrator = create_standard_pipeline(**kwargs)
     return await orchestrator.execute_pipeline() 

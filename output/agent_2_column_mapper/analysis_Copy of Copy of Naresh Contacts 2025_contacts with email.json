@@ -1,0 +1,38 @@
+{
+  "source_file": "output/agent_1_file_converter/Copy of Copy of Naresh Contacts 2025_contacts with email.csv",
+  "output_file": "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_contacts with email.csv",
+  "original_shape": [
+    1208,
+    21
+  ],
+  "standardized_shape": [
+    1208,
+    8
+  ],
+  "fields_identified": {
+    "First Name": "First Name",
+    "Last Name": "Last Name",
+    "Original Company": "Current Company",
+    "Original Title": "Designation / Role",
+    "Email": "Email",
+    "0C: Connect/Converse on LinkedIn": "LinkedIn Profile URL",
+    "Phone": "Phone Number",
+    "Mobile": "Phone Number",
+    "Product": "Designation / Role",
+    "Industry": "Geo (Location by City)",
+    "Unnamed: 10": "Geo (Location by City)",
+    "State": "Geo (Location by City)",
+    "City": "Geo (Location by City)",
+    "Street": "Geo (Location by City)",
+    "Lead Description": "Geo (Location by City)",
+    "Lead Status": "Geo (Location by City)",
+    "Lead Identification Date (YYYY-MM-DD)": "Geo (Location by City)",
+    "Lead Source": "Geo (Location by City)",
+    "Primary Campaign Source": "Geo (Location by City)",
+    "Lead Owner": "Geo (Location by City)",
+    "Record Type ID": "Geo (Location by City)"
+  },
+  "anomalies_detected": [],
+  "data_quality": 90,
+  "processing_method": "intelligent_content_analysis"
+}

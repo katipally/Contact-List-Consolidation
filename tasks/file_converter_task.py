@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """
 Agent 1: File Converter Task
-Converts uploaded spreadsheets to CSV format
+Converts uploaded spreadsheets to CSV format with lossless conversion
 
 Purpose: Take any format spreadsheet and convert to standardized CSV
+Feature: Lossless Excel conversion - processes ALL sheets (one CSV per sheet)
 Input: Excel/CSV files from DataSource
-Output: CSV files in output/agent_1_file_converter/
+Output: CSV files in output/agent_1_file_converter/ (multiple CSVs per workbook)
 """
 
 import logging
@@ -46,36 +47,55 @@ class FileConverterTask(SyncTask):
                     task_name=self.name, status=TaskStatus.FAILED, error="No input files found to convert"
                 )
 
-            # Convert each file to CSV
+            # Convert each file to CSV (lossless - one CSV per Excel sheet)
             converted_files = []
             conversion_stats = {
-                "total_files": len(input_files),
+                "total_source_files": len(input_files),
                 "successful_conversions": 0,
                 "failed_conversions": 0,
+                "total_output_csvs": 0,
+                "sheets_processed": 0,
                 "conversion_details": [],
             }
 
             for file_path in input_files:
                 try:
-                    converted_file = self._convert_file_to_csv(file_path, output_dir)
-                    if converted_file:
-                        converted_files.append(converted_file)
+                    # _convert_file_to_csv now returns a list of CSV files (one per sheet)
+                    file_csvs = self._convert_file_to_csv(file_path, output_dir)
+                    
+                    if file_csvs:  # List of converted CSV files
+                        converted_files.extend(file_csvs)  # Add all CSVs to the list
                         conversion_stats["successful_conversions"] += 1
-                        conversion_stats["conversion_details"].append(
-                            {"source": str(file_path), "output": str(converted_file), "status": "success"}
-                        )
-                        self.logger.info(f"✅ Converted: {file_path.name}")
+                        conversion_stats["total_output_csvs"] += len(file_csvs)
+                        conversion_stats["sheets_processed"] += len(file_csvs)
+                        
+                        conversion_stats["conversion_details"].append({
+                            "source": str(file_path),
+                            "outputs": [str(csv) for csv in file_csvs],
+                            "sheets_count": len(file_csvs),
+                            "status": "success"
+                        })
+                        
+                        self.logger.info(f"✅ Converted: {file_path.name} → {len(file_csvs)} CSV files")
                     else:
                         conversion_stats["failed_conversions"] += 1
-                        conversion_stats["conversion_details"].append(
-                            {"source": str(file_path), "output": None, "status": "failed"}
-                        )
+                        conversion_stats["conversion_details"].append({
+                            "source": str(file_path),
+                            "outputs": [],
+                            "sheets_count": 0,
+                            "status": "failed"
+                        })
                         self.logger.warning(f"❌ Failed: {file_path.name}")
+                        
                 except Exception as e:
                     conversion_stats["failed_conversions"] += 1
-                    conversion_stats["conversion_details"].append(
-                        {"source": str(file_path), "output": None, "status": "error", "error": str(e)}
-                    )
+                    conversion_stats["conversion_details"].append({
+                        "source": str(file_path),
+                        "outputs": [],
+                        "sheets_count": 0,
+                        "status": "error",
+                        "error": str(e)
+                    })
                     self.logger.error(f"❌ Error converting {file_path.name}: {str(e)}")
 
             # Save Agent 1 results
@@ -90,8 +110,10 @@ class FileConverterTask(SyncTask):
 
             self.logger.info("🔍 AGENT 1 OUTPUT VERIFICATION:")
             self.logger.info(
-                f"   • Files converted: {conversion_stats['successful_conversions']}/{conversion_stats['total_files']}"
+                f"   • Source files: {conversion_stats['successful_conversions']}/{conversion_stats['total_source_files']}"
             )
+            self.logger.info(f"   • CSV files created: {conversion_stats['total_output_csvs']}")
+            self.logger.info(f"   • Excel sheets processed: {conversion_stats['sheets_processed']}")
             self.logger.info(f"   • Output directory: {output_dir}")
             self.logger.info(f"   • Verification: {verification_result['status']}")
 
@@ -129,39 +151,76 @@ class FileConverterTask(SyncTask):
 
         return sorted(files)
 
-    def _convert_file_to_csv(self, file_path: Path, output_dir: Path) -> Path:
-        """Convert a single file to CSV format"""
-        # Generate output filename
-        output_filename = file_path.stem + ".csv"
-        output_path = output_dir / output_filename
-
+    def _convert_file_to_csv(self, file_path: Path, output_dir: Path) -> list[Path]:
+        """Convert a single file to CSV format with lossless sheet processing"""
+        converted_files = []
+        
         try:
             # Handle different file formats
             if file_path.suffix.lower() == ".csv":
                 # Already CSV, just copy
+                output_filename = file_path.stem + ".csv"
+                output_path = output_dir / output_filename
                 df = pd.read_csv(file_path, encoding="utf-8")
+                df.to_csv(output_path, index=False, encoding="utf-8")
+                converted_files.append(output_path)
+                
             elif file_path.suffix.lower() in [".xlsx", ".xls"]:
-                # Excel file
+                # Excel file - LOSSLESS: Read ALL sheets (one CSV per sheet)
                 try:
-                    df = pd.read_excel(file_path, engine="openpyxl")
+                    # Read ALL worksheets in the Excel file
+                    wb = pd.read_excel(file_path, sheet_name=None, engine="openpyxl")
+                    
+                    # Convert each sheet to its own CSV file
+                    for sheet_name, df in wb.items():
+                        # Skip empty sheets
+                        if df.empty:
+                            self.logger.info(f"   ⏭️  Skipped empty sheet: {sheet_name}")
+                            continue
+                            
+                        # Generate output filename with sheet name
+                        safe_sheet_name = "".join(c for c in sheet_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+                        output_filename = f"{file_path.stem}_{safe_sheet_name}.csv"
+                        output_path = output_dir / output_filename
+                        
+                        # Save sheet as CSV
+                        df.to_csv(output_path, index=False, encoding="utf-8")
+                        converted_files.append(output_path)
+                        
+                        self.logger.info(f"   ✅ Sheet '{sheet_name}': {len(df)} rows → {output_filename}")
+                        
                 except Exception:
                     # Try alternative engine for older files
                     try:
-                        df = pd.read_excel(file_path, engine="xlrd")
+                        wb = pd.read_excel(file_path, sheet_name=None, engine="xlrd")
+                        
+                        # Convert each sheet to its own CSV file
+                        for sheet_name, df in wb.items():
+                            if df.empty:
+                                continue
+                                
+                            safe_sheet_name = "".join(c for c in sheet_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+                            output_filename = f"{file_path.stem}_{safe_sheet_name}.csv"
+                            output_path = output_dir / output_filename
+                            
+                            df.to_csv(output_path, index=False, encoding="utf-8")
+                            converted_files.append(output_path)
+                            
+                            self.logger.info(f"   ✅ Sheet '{sheet_name}': {len(df)} rows → {output_filename}")
+                            
                     except Exception:
-                        self.logger.warning(f"Could not read Excel file {file_path.name}, trying CSV parsing")
-                        return None
+                        self.logger.warning(f"Could not read Excel file {file_path.name} with any engine")
+                        return []
+                        
             else:
                 self.logger.warning(f"Unsupported file format: {file_path.suffix}")
-                return None
+                return []
 
-            # Save as CSV
-            df.to_csv(output_path, index=False, encoding="utf-8")
-            return output_path
+            return converted_files
 
         except Exception as e:
             self.logger.error(f"Error converting {file_path.name}: {str(e)}")
-            return None
+            return []
 
     def _verify_agent_output(self, converted_files: list[Path], output_dir: Path, stats: dict) -> dict:
         """Verify Agent 1 output and save verification report"""

@@ -1,0 +1,27 @@
+{
+  "source_file": "output/agent_1_file_converter/Copy of Copy of Naresh Contacts 2025_Seamless -AMazon.csv",
+  "output_file": "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_Seamless -AMazon.csv",
+  "original_shape": [
+    304,
+    23
+  ],
+  "standardized_shape": [
+    304,
+    8
+  ],
+  "fields_identified": {
+    "First Name": "First Name",
+    "Last Name": "Last Name",
+    "Company Name": "Current Company",
+    "Title": "Designation / Role",
+    "Website": "LinkedIn Profile URL",
+    "Email 1": "Email",
+    "Contact Phone 1": "Phone Number",
+    "Contact City": "Geo (Location by City)",
+    "Contact State": "Geo (Location by City)",
+    "Contact Country": "Geo (Location by City)"
+  },
+  "anomalies_detected": [],
+  "data_quality": 90,
+  "processing_method": "intelligent_content_analysis"
+}

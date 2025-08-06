@@ -1,0 +1,25 @@
+{
+  "source_file": "output/agent_1_file_converter/Copy of Copy of Naresh Contacts 2025_Report.csv",
+  "output_file": "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_Report.csv",
+  "original_shape": [
+    4856,
+    32
+  ],
+  "standardized_shape": [
+    4856,
+    8
+  ],
+  "fields_identified": {
+    "First Name": "First Name",
+    "Last Name": "Last Name",
+    "New Company": "Current Company",
+    "Unnamed: 14": "Designation / Role",
+    "Email": "Email",
+    "Unnamed: 28": "LinkedIn Profile URL",
+    "Phone": "Phone Number",
+    "City": "Geo (Location by City)"
+  },
+  "anomalies_detected": [],
+  "data_quality": 90,
+  "processing_method": "intelligent_content_analysis"
+}

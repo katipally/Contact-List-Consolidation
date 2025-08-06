@@ -1,0 +1,40 @@
+{
+  "agent_name": "Data Content Analyzer",
+  "approach": "intelligent_content_analysis",
+  "files_processed": 10,
+  "total_rows_analyzed": 32641,
+  "fields_extracted": 128,
+  "anomalies_handled": 0,
+  "data_quality_score": 90.0,
+  "processing_time": 73.85424709320068,
+  "capabilities_used": [
+    "table_understanding",
+    "anomaly_detection",
+    "header_inference",
+    "field_recognition",
+    "batch_processing"
+  ],
+  "output_files": [
+    "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_All Contacts.csv",
+    "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_stephen Leads.csv",
+    "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_Bay area Leads -Salesforce.csv",
+    "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_Report.csv",
+    "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_contacts with email.csv",
+    "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_Amazon.csv",
+    "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_Seamless -AMazon.csv",
+    "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_Amazon Email.csv",
+    "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_CVS Health Corporation.csv",
+    "output/agent_2_column_mapper/analyzed_Copy of Copy of Naresh Contacts 2025_Priyas List.csv"
+  ],
+  "standard_fields": [
+    "First Name",
+    "Last Name",
+    "Current Company",
+    "Designation / Role",
+    "LinkedIn Profile URL",
+    "Email",
+    "Phone Number",
+    "Geo (Location by City)"
+  ],
+  "status": "SUCCESS"
+}

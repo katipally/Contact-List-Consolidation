@@ -1,7 +1,7 @@
 [project]
 name = "contact-consolidation-pipeline"
 version = "1.0.0"
-description = "AI-powered contact consolidation and enrichment pipeline with 5-agent architecture"
+description = "AI-powered contact consolidation and enrichment pipeline with 6-agent architecture"
 authors = [
     {name = "Yashwanth Reddy", email = "yash@example.com"}
 ]
@@ -59,7 +59,7 @@ dev = [
 ]
 
 [project.scripts]
-contact-pipeline = "enhanced_pipeline_main:main"
+contact-pipeline = "run_pipeline:main"
 
 [build-system]
 requires = ["hatchling"]
@@ -99,4 +99,4 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py"]
-addopts = "-v --cov=tasks --cov=utils --cov-report=term-missing" 
+addopts = "-v" 
