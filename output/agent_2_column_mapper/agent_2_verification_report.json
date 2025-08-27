@@ -1,0 +1,31 @@
+{
+  "agent_name": "Data Content Analyzer",
+  "approach": "intelligent_content_analysis",
+  "files_processed": 1,
+  "total_rows_analyzed": 109,
+  "fields_extracted": 8,
+  "anomalies_handled": 0,
+  "data_quality_score": 95.0,
+  "processing_time": 19.52130889892578,
+  "capabilities_used": [
+    "table_understanding",
+    "anomaly_detection",
+    "header_inference",
+    "field_recognition",
+    "batch_processing"
+  ],
+  "output_files": [
+    "output/agent_2_column_mapper/analyzed_2025 LLM ICP List_Finance.csv"
+  ],
+  "standard_fields": [
+    "First Name",
+    "Last Name",
+    "Current Company",
+    "Designation / Role",
+    "LinkedIn Profile URL",
+    "Email",
+    "Phone Number",
+    "Geo (Location by City)"
+  ],
+  "status": "SUCCESS"
+}

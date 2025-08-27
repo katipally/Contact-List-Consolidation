@@ -1,0 +1,27 @@
+# Contact List Consolidation Tool - Required Packages
+# Install these with: pip install -r requirements.txt
+
+# Essential data handling packages
+pandas>=2.0.0          # For working with spreadsheets and data tables
+numpy>=1.24.0           # Math and data operations
+openpyxl>=3.1.0         # Reading Excel files
+aiohttp>=3.8.0          # Making web requests efficiently
+
+# Web scraping (to find missing emails)
+ddgs>=6.0.0              # DuckDuckGo search (updated package name)
+beautifulsoup4>=4.12.0    # Reading web pages
+requests>=2.31.0          # Making web requests
+fake-useragent>=1.4.0     # Avoiding getting blocked by websites
+
+# Finding duplicates and similar contacts
+rapidfuzz>=3.5.0        # Fast fuzzy string matching
+python-Levenshtein>=0.23.0  # String similarity algorithms
+
+# User interface
+streamlit>=1.29.0       # Web interface for easy usage
+
+# System monitoring
+psutil>=5.9.0           # Monitor memory and CPU usage
+
+# Note: You also need Ollama with gemma3:4b model for AI features
+# Install with: ollama pull gemma3:4b 

@@ -1,0 +1,37 @@
+{
+  "agent": "Agent 6: CSV Cleaner & CRM Exporter",
+  "timestamp": "2025-08-27 13:02:18",
+  "input_summary": {
+    "original_contacts": 568,
+    "original_columns": 10,
+    "source_file": "output/agent_5_email_enrichment/enriched_contacts.csv"
+  },
+  "processing_summary": {
+    "standard_fields_count": 8,
+    "final_columns": 8,
+    "fields_removed": 2,
+    "contacts_cleaned": 568
+  },
+  "outputs_created": {
+    "files_generated": 3,
+    "cleaned_csv": "output/agent_6_crm_exporter/cleaned_contacts_standard_fields.csv",
+    "apollo_csv": "output/agent_6_crm_exporter/apollo_import_ready.csv",
+    "hubspot_csv": "output/agent_6_crm_exporter/hubspot_import_ready.csv"
+  },
+  "export_statistics": {
+    "apollo_contacts": 568,
+    "hubspot_contacts": 568,
+    "files_processed": 3
+  },
+  "standard_fields_used": [
+    "First Name",
+    "Last Name",
+    "Current Company",
+    "Designation / Role",
+    "LinkedIn Profile URL",
+    "Email",
+    "Phone Number",
+    "Geo (Location by City)"
+  ],
+  "validation_status": "SUCCESS"
+}

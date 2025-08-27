@@ -1,0 +1,170 @@
+{
+  "status": "success",
+  "pipeline_info": {
+    "execution_start": "2025-08-27T11:13:32.773027",
+    "execution_end": "2025-08-27T13:02:18.980403",
+    "total_execution_time": 6526.207376,
+    "tasks_registered": 6,
+    "tasks_completed": 6,
+    "tasks_failed": 0,
+    "success_rate": 100.0
+  },
+  "task_execution_order": [
+    "file_converter",
+    "column_mapper_agent",
+    "data_consolidator_agent",
+    "smart_deduplicator_agent",
+    "web_scraper_agent",
+    "csv_cleaner_crm_exporter"
+  ],
+  "task_results": {
+    "file_converter": {
+      "status": "success",
+      "execution_time": 0.2714118957519531,
+      "metadata": {
+        "agent_number": 1,
+        "agent_name": "File Converter",
+        "files_converted": 1,
+        "output_verification": {
+          "status": "SUCCESS",
+          "files_verified": 5,
+          "files_readable": 5,
+          "total_rows": 620,
+          "issues": []
+        }
+      },
+      "error": null
+    },
+    "column_mapper_agent": {
+      "status": "success",
+      "execution_time": 42.88784885406494,
+      "metadata": {
+        "agent_number": 2,
+        "agent_name": "Enhanced Data Content Analyzer (2025 Optimized)",
+        "files_processed": 5,
+        "approach": "parallel_content_analysis_with_enhanced_sampling",
+        "optimizations": [
+          "parallel_processing",
+          "stratified_sampling",
+          "vectorized_operations",
+          "robust_header_detection"
+        ],
+        "capabilities": [
+          "table_understanding",
+          "anomaly_detection",
+          "header_inference",
+          "field_recognition",
+          "quality_scoring"
+        ]
+      },
+      "error": null
+    },
+    "data_consolidator_agent": {
+      "status": "success",
+      "execution_time": 0.042819976806640625,
+      "metadata": {
+        "agent_number": 3,
+        "agent_name": "Data Consolidator",
+        "total_contacts": 570,
+        "output_verification": {
+          "status": "SUCCESS",
+          "consolidated_file_readable": true,
+          "enhanced_file_readable": true,
+          "total_contacts": 570,
+          "data_quality_stats": {
+            "total_rows": 570,
+            "rows_with_names": 570,
+            "rows_with_email": 570,
+            "rows_with_company": 570,
+            "rows_with_linkedin": 570
+          },
+          "issues": []
+        }
+      },
+      "error": null
+    },
+    "smart_deduplicator_agent": {
+      "status": "success",
+      "execution_time": 0.4435079097747803,
+      "metadata": {},
+      "error": null
+    },
+    "web_scraper_agent": {
+      "status": "success",
+      "execution_time": 6482.528771162033,
+      "metadata": {
+        "agent_number": 5,
+        "agent_name": "Advanced Email Enrichment (2025 Optimized)",
+        "contacts_processed": 505,
+        "emails_found": 451,
+        "emails_validated": 451,
+        "pages_scraped": 1426,
+        "parallel_tasks": 505,
+        "optimizations": [
+          "duckduckgo_url_discovery",
+          "requests_beautifulsoup_scraping",
+          "gemma3_4b_extraction",
+          "parallel_processing",
+          "smart_email_validation",
+          "masked_email_detection",
+          "rate_limiting_optimization"
+        ]
+      },
+      "error": null
+    },
+    "csv_cleaner_crm_exporter": {
+      "status": "success",
+      "execution_time": 0.032507896423339844,
+      "metadata": {
+        "contacts_processed": 568,
+        "files_exported": 3,
+        "processing_time": 0.032044172286987305,
+        "verification_report": "output/agent_6_crm_exporter/agent_6_verification_report.json"
+      },
+      "error": null
+    }
+  },
+  "pipeline_statistics": {
+    "pipeline_start": "2025-08-27T11:13:32.772264",
+    "total_execution_time": 6526.208329,
+    "tasks_completed": 6,
+    "tasks_successful": 6,
+    "task_details": {
+      "file_converter": {
+        "status": "success",
+        "execution_time": 0.2714118957519531,
+        "timestamp": "2025-08-27T11:13:33.044312"
+      },
+      "column_mapper_agent": {
+        "status": "success",
+        "execution_time": 42.88784885406494,
+        "timestamp": "2025-08-27T11:14:15.932064"
+      },
+      "data_consolidator_agent": {
+        "status": "success",
+        "execution_time": 0.042819976806640625,
+        "timestamp": "2025-08-27T11:14:15.975073"
+      },
+      "smart_deduplicator_agent": {
+        "status": "success",
+        "execution_time": 0.4435079097747803,
+        "timestamp": "2025-08-27T11:14:16.418833"
+      },
+      "web_scraper_agent": {
+        "status": "success",
+        "execution_time": 6482.528771162033,
+        "timestamp": "2025-08-27T13:02:18.940935"
+      },
+      "csv_cleaner_crm_exporter": {
+        "status": "success",
+        "execution_time": 0.032507896423339844,
+        "timestamp": "2025-08-27T13:02:18.980185"
+      }
+    }
+  },
+  "output_files": {
+    "final_enriched_contacts": "",
+    "deduplicated_contacts": "output/agent_4_smart_deduplicator/merged_contacts.csv",
+    "consolidated_contacts": ""
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "source_file": "output/agent_1_file_converter/2025 LLM ICP List_Finance.csv",
+  "output_file": "output/agent_2_column_mapper/analyzed_2025 LLM ICP List_Finance.csv",
+  "original_shape": [
+    109,
+    8
+  ],
+  "standardized_shape": [
+    109,
+    8
+  ],
+  "fields_identified": {
+    "F Name": "First Name",
+    "L Name": "Last Name",
+    "Role": "Designation / Role",
+    "Company": "Current Company",
+    "Linkedin": "LinkedIn Profile URL",
+    "Geo": "Geo (Location by City)",
+    "Email": "Email",
+    "Phone": "Phone Number"
+  },
+  "anomalies_detected": [],
+  "data_quality": 95,
+  "processing_method": "intelligent_content_analysis"
+}
